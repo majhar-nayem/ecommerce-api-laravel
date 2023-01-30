@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class RegisterUserTest extends TestCase
@@ -14,7 +16,7 @@ class RegisterUserTest extends TestCase
      *
      * @return void
      */
-    public function test_validation_error()
+    public function test_input_form_validation()
     {
         $response = $this->postJson('v1/user/register');
 
@@ -51,12 +53,16 @@ class RegisterUserTest extends TestCase
             ->assertJsonMissing(['password']);
     }
 
-    public function test_password_is_hashed()
+    public function test_password_is_saved_in_hashed_format()
     {
         $request_data = [
             'phone' => '01911131345',
             'password' => '123456'
         ];
-        $response = $this->post('v1/user/register', );
+        $this->post('v1/user/register', $request_data);
+        $user = User::query()->where('phone', $request_data['phone'])->first();
+        $this->assertNotEquals($request_data['password'], $user->password);
+        $this->assertTrue(Hash::check($request_data['password'], $user->password));
+        $this->assertFalse(Hash::check('78234', $user->password));
     }
 }
